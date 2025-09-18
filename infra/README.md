@@ -26,12 +26,20 @@ terraform apply
 
 ## Infrastructure Components
 
-- **EKS Cluster**: Kubernetes orchestration platform
-- **VPC**: Network isolation with multi-AZ deployment
-- **RDS**: Managed PostgreSQL database
-- **SQS**: Message queue for email processing
-- **SES**: Email delivery service
-- **IAM**: Service accounts and permissions
+### AWS Resources
+- **EKS Cluster**: Kubernetes orchestration with managed node groups
+- **VPC**: Multi-AZ network with public/private subnets
+- **SQS**: Message queuing for email processing
+- **SES**: Email delivery service with domain verification
+- **S3 + CloudFront**: Static website hosting with CDN
+- **Route53**: DNS management and domain routing
+- **IAM**: IRSA roles for service accounts
+
+### Kubernetes Components
+- **ArgoCD**: GitOps deployment automation
+- **Cert-Manager**: Automated TLS certificate provisioning
+- **External DNS**: Automatic DNS record management
+- **External Secrets**: AWS Secrets Manager integration
 
 ## Configuration
 

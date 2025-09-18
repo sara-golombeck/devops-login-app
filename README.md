@@ -8,10 +8,19 @@ A production-ready, cloud-native email service platform built on AWS EKS with Gi
 
 ![DevOps Flow](diagrams/devops_flow.png)
 
-The platform consists of three main components:
+The platform demonstrates enterprise-grade DevOps practices with a complete microservices architecture:
+
+### Application Microservices
 - **Frontend**: React-based web application for email submission
 - **Backend API**: .NET 8 REST API for email processing and queuing
 - **Email Worker**: Background service for email delivery via AWS SES
+
+### DevOps Infrastructure
+- **Infrastructure as Code**: Terraform for AWS resource provisioning
+- **GitOps Deployment**: ArgoCD for automated Kubernetes deployments
+- **CI/CD Pipelines**: Jenkins for automated testing, building, and deployment
+- **Monitoring Stack**: Prometheus, Grafana, and centralized logging
+- **Security Automation**: Automated certificate management and secrets handling
 
 ### AWS Infrastructure
 
@@ -23,16 +32,18 @@ Our cloud-native infrastructure leverages:
 - **AWS SES**: Email delivery service
 - **AWS S3 + CloudFront**: Static website hosting with CDN
 - **PostgreSQL**: Database for user management and audit trails
+- **AWS Route53**: DNS management for MYNAME.CLICK domain
+- **AWS Secrets Manager**: Secure credential storage
 
 ![EKS Architecture](diagrams/eks.png)
 
 ### Application Flow
 
-![Email Sent Flow](diagrams/email_sent.png)
+![Login Application](diagrams/login_app.png)
 
 The application provides a seamless user experience:
 
-![Login Application](diagrams/login_app.png)
+![Email Sent Flow](diagrams/email_sent.png)
 
 ## 🔄 CI/CD Pipeline
 
@@ -125,7 +136,7 @@ email-service/
 │   ├── backend/          # .NET 8 Web API
 │   ├── frontend/         # React application
 │   ├── email-worker/     # Background email processor
-│   └── e2e-email-service/ # End-to-end tests
+│   └── e2e-email-service/ # End-to-end tests (external repository)
 ├── infra/                # Terraform infrastructure code
 │   └── modules/          # Reusable Terraform modules
 ├── gitops/               # GitOps configuration
@@ -138,22 +149,24 @@ email-service/
 ## 🛡️ Security Features
 
 - **IRSA (IAM Roles for Service Accounts)**: Fine-grained AWS permissions
-- **Network Policies**: Kubernetes network segmentation
-- **Secrets Management**: AWS Secrets Manager integration
-- **TLS Encryption**: End-to-end encryption with cert-manager
-- **Container Security**: Distroless images and security scanning
+- **Network Policies**: Kubernetes network segmentation  
+- **Secrets Management**: AWS Secrets Manager with External Secrets Operator
+- **TLS Encryption**: Automated Let's Encrypt certificates via cert-manager
+- **Container Security**: Distroless images and vulnerability scanning
 - **WAF Protection**: AWS WAF for frontend protection
+- **DNS Security**: External DNS with secure domain management
 
 
 ## 📊 Monitoring & Observability
 
 ![Logging Architecture](diagrams/logging.png)
 
-- **Metrics**: Prometheus for metrics collection
-- **Visualization**: Grafana dashboards
+- **Metrics**: Prometheus for metrics collection and storage
+- **Visualization**: Grafana dashboards with custom panels
 - **Logging**: Centralized logging with Fluent Bit and Elasticsearch
-
-- **Alerting**: Automated alerts for critical issues
+- **Service Discovery**: Automatic service monitoring via ServiceMonitor CRDs
+- **Alerting**: AlertManager for automated notifications
+- **Health Checks**: Kubernetes liveness and readiness probes
 
 ## 🔧 Configuration
 
@@ -171,9 +184,12 @@ email-service/
 
 Key variables in `infra/terraform.tfvars`:
 - `cluster_name`: EKS cluster name
-- `vpc_cidr`: VPC CIDR block
-- `domain_name`: Domain for SES
+- `vpc_cidr`: VPC CIDR block  
+- `domain_name`: Domain for SES configuration
+- `addit_domain_name`: Primary domain (MYNAME.CLICK)
 - `admin_user_arn`: Admin user ARN for EKS access
+- `project_name`: Project identifier for resource naming
+- `namespace`: Kubernetes namespace for applications
 
 ## 🧪 Testing
 
@@ -201,7 +217,7 @@ python -m pytest
 
 - Unit tests for all business logic
 - Integration tests for API endpoints
-- E2E tests for complete user workflows
+- E2E tests for complete user workflows (external repository integration)
 
 
 ## 📈 Performance
@@ -219,7 +235,7 @@ python -m pytest
 1. **Infrastructure**: Deployed via Terraform
 2. **Applications**: Deployed via ArgoCD GitOps
 3. **Monitoring**: Automatic setup of observability stack
-4. **Security**: Automated certificate management
+4. **Security**: Automated TLS certificate management with cert-manager
 
 ### Deployment Strategy
 
@@ -259,6 +275,7 @@ For support and questions:
 - [Backend API Documentation](application/backend/README.md)
 - [Frontend Documentation](application/frontend/README.md)
 - [Email Worker Documentation](application/email-worker/README.md)
+- [E2E Testing Documentation](application/e2e-email-service/README.md)
 - [Infrastructure Documentation](infra/README.md)
 - [GitOps Documentation](gitops/README.md)
 
