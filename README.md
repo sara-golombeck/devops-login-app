@@ -12,7 +12,7 @@ The platform demonstrates enterprise-grade DevOps practices with a complete micr
 
 ### Application Microservices
 - **Frontend**: React-based web application for email submission
-- **Backend API**: .NET 8 REST API for email processing and queuing
+- **Backend API**: .NET 8 Minimal API for email processing and queuing
 - **Email Worker**: Background service for email delivery via AWS SES
 
 ### DevOps Infrastructure
@@ -133,7 +133,7 @@ The platform implements:
 ```
 email-service/
 ├── application/           # Application source code
-│   ├── backend/          # .NET 8 Web API
+│   ├── backend/          # .NET 8 Minimal API
 │   ├── frontend/         # React application
 │   ├── email-worker/     # Background email processor
 │   └── e2e-email-service/ # End-to-end tests (external repository)
@@ -261,7 +261,7 @@ For support and questions:
 
 ## 🔗 Related Documentation
 
-- [Backend API Documentation](application/backend/README.md)
+- [Backend Minimal API Documentation](application/backend/README.md)
 - [Frontend Documentation](application/frontend/README.md)
 - [Email Worker Documentation](application/email-worker/README.md)
 - [E2E Testing Documentation](application/e2e-email-service/README.md)

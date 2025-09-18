@@ -1,6 +1,6 @@
 # Email Service Backend API
 
-.NET 8 Web API for email processing with PostgreSQL and AWS SQS integration.
+.NET 8 Minimal API for email processing with PostgreSQL and AWS SQS integration.
 
 ![Backend & Worker CI](../../diagrams/back_and_worker_ci.png)
 
