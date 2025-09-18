@@ -2,6 +2,8 @@
 
 A production-ready, cloud-native email service platform built on AWS EKS with GitOps deployment patterns. This platform provides a scalable, secure, and observable email processing system using microservices architecture.
 
+**Automated Pipeline Trigger**: The moment a developer pushes code to the repository, the entire CI/CD pipeline automatically initiates, triggering a cascade of automated processes including testing, building, security scanning, and deployment.
+
 ## 🏗️ Architecture Overview
 
 ![DevOps Flow](diagrams/devops_flow.png)
@@ -36,7 +38,7 @@ The application provides a seamless user experience:
 
 ![Complete CI/CD Pipeline](diagrams/full_ci.png)
 
-Our comprehensive CI/CD pipeline includes:
+**Automated Pipeline Trigger**: The moment a developer pushes code to the repository, the entire CI/CD pipeline automatically initiates, triggering a cascade of automated processes including testing, building, security scanning, and deployment.
 
 ### Backend & Worker Pipeline
 ![Backend & Worker CI](diagrams/back_and_worker_ci.png)
@@ -53,6 +55,14 @@ The platform implements:
 - **GitOps Deployment**: ArgoCD for automated deployments
 - **Security Scanning**: Container and dependency vulnerability scanning
 - **Monitoring**: Prometheus metrics and Grafana dashboards
+
+### Automated Workflow
+1. **Code Push**: Developer pushes code changes
+2. **CI Trigger**: Jenkins pipeline automatically starts
+3. **Testing Phase**: Automated test execution
+4. **Build Phase**: Docker image creation and scanning
+5. **GitOps Sync**: ArgoCD detects changes and deploys
+6. **Monitoring**: Automatic health checks and metrics collection
 
 ## 🚀 Quick Start
 
@@ -132,6 +142,7 @@ email-service/
 - **Secrets Management**: AWS Secrets Manager integration
 - **TLS Encryption**: End-to-end encryption with cert-manager
 - **Container Security**: Distroless images and security scanning
+- **WAF Protection**: AWS WAF for frontend protection
 
 
 ## 📊 Monitoring & Observability
