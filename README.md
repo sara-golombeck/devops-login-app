@@ -1,23 +1,58 @@
-# Automarkly Email Service Platform
+# Email Service Platform
 
 A production-ready, cloud-native email service platform built on AWS EKS with GitOps deployment patterns. This platform provides a scalable, secure, and observable email processing system using microservices architecture.
 
 ## 🏗️ Architecture Overview
+
+![DevOps Flow](diagrams/devops_flow.png)
 
 The platform consists of three main components:
 - **Frontend**: React-based web application for email submission
 - **Backend API**: .NET 8 REST API for email processing and queuing
 - **Email Worker**: Background service for email delivery via AWS SES
 
-### Infrastructure Components
+### AWS Infrastructure
 
+![AWS Infrastructure](diagrams/aws_infra.png)
+
+Our cloud-native infrastructure leverages:
 - **AWS EKS**: Kubernetes cluster for container orchestration
 - **AWS SQS**: Message queuing for reliable email processing
 - **AWS SES**: Email delivery service
 - **AWS S3 + CloudFront**: Static website hosting with CDN
 - **PostgreSQL**: Database for user management and audit trails
-- **ArgoCD**: GitOps continuous deployment
-- **Prometheus + Grafana**: Monitoring and observability
+
+![EKS Architecture](diagrams/eks.png)
+
+### Application Flow
+
+![Email Sent Flow](diagrams/email_sent.png)
+
+The application provides a seamless user experience:
+
+![Login Application](diagrams/login_app.png)
+
+## 🔄 CI/CD Pipeline
+
+![Complete CI/CD Pipeline](diagrams/full_ci.png)
+
+Our comprehensive CI/CD pipeline includes:
+
+### Backend & Worker Pipeline
+![Backend & Worker CI](diagrams/back_and_worker_ci.png)
+
+### Frontend Pipeline
+![Frontend CI](diagrams/frontend_ci.png)
+
+### Pipeline Overview
+![Pipeline](diagrams/pipeline.png)
+
+The platform implements:
+- **Automated Testing**: Unit tests, integration tests, and E2E tests
+- **Multi-Environment**: Staging and production environments
+- **GitOps Deployment**: ArgoCD for automated deployments
+- **Security Scanning**: Container and dependency vulnerability scanning
+- **Monitoring**: Prometheus metrics and Grafana dashboards
 
 ## 🚀 Quick Start
 
@@ -75,7 +110,7 @@ The platform consists of three main components:
 ## 📁 Project Structure
 
 ```
-automarkly/
+email-service/
 ├── application/           # Application source code
 │   ├── backend/          # .NET 8 Web API
 │   ├── frontend/         # React application
@@ -86,27 +121,9 @@ automarkly/
 ├── gitops/               # GitOps configuration
 │   ├── argocd/          # ArgoCD applications
 │   └── email-service/   # Helm charts
+├── diagrams/             # Architecture diagrams
 └── scripts/             # Utility scripts
 ```
-
-## 🔄 CI/CD Pipeline
-
-The platform implements a comprehensive CI/CD pipeline with:
-
-- **Automated Testing**: Unit tests, integration tests, and E2E tests
-- **Multi-Environment**: Staging and production environments
-- **GitOps Deployment**: ArgoCD for automated deployments
-- **Security Scanning**: Container and dependency vulnerability scanning
-- **Monitoring**: Prometheus metrics and Grafana dashboards
-
-### Pipeline Features
-
-- ✅ Automated unit and integration testing
-- ✅ Docker image building and scanning
-- ✅ Multi-stage deployments (staging → production)
-- ✅ GitOps-based deployment with ArgoCD
-- ✅ Automated rollbacks on failure
-- ✅ Comprehensive monitoring and alerting
 
 ## 🛡️ Security Features
 
@@ -132,7 +149,7 @@ The platform implements a comprehensive CI/CD pipeline with:
 | Variable | Description | Default |
 |----------|-------------|---------|
 | `AWS_REGION` | AWS region | `us-east-1` |
-| `CLUSTER_NAME` | EKS cluster name | `automarkly-cluster` |
+| `CLUSTER_NAME` | EKS cluster name | `email-service-cluster` |
 | `DOMAIN_NAME` | Primary domain | - |
 | `DATABASE_URL` | PostgreSQL connection string | - |
 | `SQS_QUEUE_URL` | SQS queue URL | - |
@@ -232,6 +249,17 @@ For support and questions:
 - [Infrastructure Documentation](infra/README.md)
 - [GitOps Documentation](gitops/README.md)
 
+## System Flow
+
+1. **User Access**: User navigates to MYNAME.CLICK domain
+2. **Frontend Delivery**: CloudFront CDN serves React application from S3
+3. **Authentication Request**: User enters email, frontend calls `/api/auth/login` endpoint
+4. **API Processing**: .NET backend validates email and stores user data in PostgreSQL
+5. **Queue Integration**: Backend publishes email job to AWS SQS queue
+6. **Email Processing**: Email Worker service consumes SQS messages
+7. **Email Delivery**: Worker sends login emails via AWS SES
+8. **Monitoring**: All components report metrics to Prometheus for Grafana visualization
+
 ---
 
-**Built with ❤️ for scalable email processing**
+**Developed by Sara**
