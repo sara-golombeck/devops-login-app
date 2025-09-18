@@ -210,12 +210,12 @@ python -m pytest
 3. **Monitoring**: Automatic setup of observability stack
 4. **Security**: Automated certificate management
 
-### Rollback Strategy
+### Deployment Strategy
 
-- **Blue-Green Deployments**: Zero-downtime deployments
-- **Automated Rollbacks**: On health check failures
-- **Database Migrations**: Backward-compatible migrations
-- **Feature Flags**: Gradual feature rollouts
+- **Rolling Updates**: Kubernetes rolling deployment strategy
+- **ArgoCD Sync**: Automated GitOps-based deployments
+- **Health Checks**: Kubernetes liveness and readiness probes
+- **Rollback**: ArgoCD rollback to previous working version
 
 ## 🤝 Contributing
 
