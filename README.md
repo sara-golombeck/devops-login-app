@@ -49,7 +49,7 @@ Our comprehensive CI/CD pipeline includes:
 
 The platform implements:
 - **Automated Testing**: Unit tests, integration tests, and E2E tests
-- **Multi-Environment**: Staging and production environments
+- **Production Environment**: Single production environment
 - **GitOps Deployment**: ArgoCD for automated deployments
 - **Security Scanning**: Container and dependency vulnerability scanning
 - **Monitoring**: Prometheus metrics and Grafana dashboards
@@ -132,7 +132,7 @@ email-service/
 - **Secrets Management**: AWS Secrets Manager integration
 - **TLS Encryption**: End-to-end encryption with cert-manager
 - **Container Security**: Distroless images and security scanning
-- **WAF Protection**: AWS WAF for frontend protection
+
 
 ## 📊 Monitoring & Observability
 
@@ -141,7 +141,7 @@ email-service/
 - **Metrics**: Prometheus for metrics collection
 - **Visualization**: Grafana dashboards
 - **Logging**: Centralized logging with Fluent Bit and Elasticsearch
-- **Tracing**: Application performance monitoring
+
 - **Alerting**: Automated alerts for critical issues
 
 ## 🔧 Configuration
@@ -191,7 +191,7 @@ python -m pytest
 - Unit tests for all business logic
 - Integration tests for API endpoints
 - E2E tests for complete user workflows
-- Load testing for performance validation
+
 
 ## 📈 Performance
 
@@ -199,7 +199,7 @@ python -m pytest
 - **Queue Processing**: Asynchronous email processing with SQS
 - **CDN**: CloudFront for global content delivery
 - **Database Optimization**: Connection pooling and query optimization
-- **Caching**: Redis for session and data caching
+
 
 ## 🚀 Deployment
 
