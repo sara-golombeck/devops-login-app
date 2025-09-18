@@ -32,7 +32,7 @@ Our cloud-native infrastructure leverages:
 - **AWS SES**: Email delivery service
 - **AWS S3 + CloudFront**: Static website hosting with CDN
 - **PostgreSQL**: Database for user management and audit trails
-- **AWS Route53**: DNS management for MYNAME.CLICK domain
+- **AWS Route53**: DNS management for myname.click domain
 - **AWS Secrets Manager**: Secure credential storage
 
 ![EKS Architecture](diagrams/eks.png)
@@ -159,14 +159,20 @@ email-service/
 
 ## 📊 Monitoring & Observability
 
-![Logging Architecture](diagrams/logging.png)
-
 - **Metrics**: Prometheus for metrics collection and storage
 - **Visualization**: Grafana dashboards with custom panels
-- **Logging**: Centralized logging with Fluent Bit and Elasticsearch
 - **Service Discovery**: Automatic service monitoring via ServiceMonitor CRDs
 - **Alerting**: AlertManager for automated notifications
 - **Health Checks**: Kubernetes liveness and readiness probes
+
+### Centralized Logging
+
+![Logging Architecture](diagrams/logging.png)
+
+- **Log Collection**: Fluent Bit for log aggregation from all pods
+- **Log Storage**: Elasticsearch for centralized log storage and indexing
+- **Log Analysis**: Kibana dashboards for log visualization and analysis
+- **Log Retention**: Automated log rotation and retention policies
 
 ## 🔧 Configuration
 
@@ -186,7 +192,7 @@ Key variables in `infra/terraform.tfvars`:
 - `cluster_name`: EKS cluster name
 - `vpc_cidr`: VPC CIDR block  
 - `domain_name`: Domain for SES configuration
-- `addit_domain_name`: Primary domain (MYNAME.CLICK)
+- `addit_domain_name`: Primary domain (myname.click)
 - `admin_user_arn`: Admin user ARN for EKS access
 - `project_name`: Project identifier for resource naming
 - `namespace`: Kubernetes namespace for applications
@@ -244,31 +250,14 @@ python -m pytest
 - **Health Checks**: Kubernetes liveness and readiness probes
 - **Rollback**: ArgoCD rollback to previous working version
 
-## 🤝 Contributing
 
-1. Fork the repository
-2. Create a feature branch
-3. Make your changes
-4. Add tests for new functionality
-5. Submit a pull request
-
-### Development Guidelines
-
-- Follow conventional commit messages
-- Maintain test coverage above 80%
-- Update documentation for new features
-- Follow security best practices
-
-## 📄 License
-
-This project is licensed under the MIT License - see the [LICENSE](LICENSE) file for details.
 
 ## 🆘 Support
 
 For support and questions:
 - Create an issue in the repository
 - Check the documentation in each component's README
-- Review the troubleshooting guide in the wiki
+- Review the architecture diagrams and system documentation
 
 ## 🔗 Related Documentation
 
@@ -281,7 +270,7 @@ For support and questions:
 
 ## System Flow
 
-1. **User Access**: User navigates to MYNAME.CLICK domain
+1. **User Access**: User navigates to myname.click domain
 2. **Frontend Delivery**: CloudFront CDN serves React application from S3
 3. **Authentication Request**: User enters email, frontend calls `/api/auth/login` endpoint
 4. **API Processing**: .NET backend validates email and stores user data in PostgreSQL
