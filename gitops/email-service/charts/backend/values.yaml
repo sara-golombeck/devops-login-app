@@ -1,0 +1,64 @@
+replicaCount: 2
+
+image:
+  repository: "980921758549.dkr.ecr.ap-south-1.amazonaws.com/automarkly/emailservice-backend"
+  tag: "1.0.5-44"
+  pullPolicy: IfNotPresent
+
+service:
+  type: ClusterIP
+  port: 8080
+  targetPort: 8080
+  name: backend
+
+env:
+  ASPNETCORE_ENVIRONMENT: "Production"
+  ASPNETCORE_URLS: "http://+:8080"
+  AWS__Region: "ap-south-1"
+  AWS__SQS__QueueUrl: "https://sqs.ap-south-1.amazonaws.com/980921758549/email-service-email-queue"
+
+serviceAccount:
+  name: "auth-service"
+  roleArn: "arn:aws:iam::980921758549:role/email-service-auth-service-role"
+  annotations: {}
+
+livenessProbe:
+  httpGet:
+    path: /api/health
+    port: 8080
+  initialDelaySeconds: 30
+  periodSeconds: 10
+  failureThreshold: 3
+
+readinessProbe:
+  httpGet:
+    path: /api/health
+    port: 8080
+  initialDelaySeconds: 5
+  periodSeconds: 5
+  failureThreshold: 3
+
+resources:
+  limits:
+    cpu: 500m
+    memory: 512Mi
+  requests:
+    cpu: 250m
+    memory: 256Mi
+
+securityContext:
+  runAsNonRoot: true
+  runAsUser: 10000
+  fsGroup: 10000
+
+autoscaling:
+  enabled: false
+  minReplicas: 2
+  maxReplicas: 5
+  targetCPUUtilizationPercentage: 80
+
+monitoring:
+  enabled: false
+  path: "/metrics"
+  interval: "30s"
+  portName: "http"

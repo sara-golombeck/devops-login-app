@@ -1,0 +1,26 @@
+apiVersion: v2
+name: email-service
+description: Email Service Platform
+type: application
+version: 1.0.0
+appVersion: "1.0.4"
+
+keywords:
+  - email
+  - service
+  - api
+  - microservices
+
+dependencies:
+  - name: backend
+    version: 1.0.0
+    repository: "file://./charts/backend"
+  - name: worker
+    version: 1.0.0
+    repository: "file://./charts/worker"
+  - name: postgresql
+    version: 15.5.32
+    repository: "https://charts.bitnami.com/bitnami"
+    condition: postgresql.enabled
+
+

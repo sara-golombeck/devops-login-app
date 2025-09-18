@@ -1,0 +1,50 @@
+apiVersion: argoproj.io/v1alpha1
+kind: Application
+metadata:
+  name: applications
+  namespace: argocd
+  labels:
+    app.kubernetes.io/name: applications
+    app.kubernetes.io/part-of: gitops-platform
+    app.kubernetes.io/managed-by: argocd
+  annotations:
+    # ROOT APP - manages all other applications
+    argocd.argoproj.io/manifest-generate-paths: "."
+  # CRITICAL: Finalizer for proper cleanup
+  finalizers:
+    - resources-finalizer.argocd.argoproj.io
+spec:
+  project: default
+  source:
+    repoURL: https://github.com/sara-golombeck/gitops-email-service.git
+    targetRevision: main
+    path: argocd/applications
+  destination:
+    server: https://kubernetes.default.svc
+    namespace: argocd
+  syncPolicy:
+    automated:
+      prune: true
+      selfHeal: true
+    syncOptions:
+      - CreateNamespace=true
+      - RespectIgnoreDifferences=true
+    retry:
+      limit: 5
+      backoff:
+        duration: 5s
+        factor: 2
+        maxDuration: 3m
+  ignoreDifferences:
+  - group: "*"
+    kind: "Application"
+    jsonPointers:
+    - /spec/syncPolicy/automated
+    - /metadata/annotations
+  info:
+  - name: 'Description'
+    value: 'Root application managing all infrastructure and applications'
+  - name: 'Repository'
+    value: 'https://github.com/sara-golombeck/gitops-email-service'
+  - name: 'Pattern'
+    value: 'App-of-Apps'

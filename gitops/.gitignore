@@ -1,0 +1,7 @@
+.terraform/
+*.zip
+repo-secret.yamlargocd-linux-amd64
+terraform.tfstate
+terraform.tfstate.backup
+*.tfstate
+*.tfstate.*

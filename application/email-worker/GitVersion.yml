@@ -1,0 +1,6 @@
+mode: ContinuousDelivery
+commit-message-incrementing: Enabled
+major-version-bump-message: 'BREAKING CHANGE:|^feat!:'
+minor-version-bump-message: '^feat:'
+patch-version-bump-message: '^fix:'
+

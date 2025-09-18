@@ -1,0 +1,65 @@
+# Environment variables from external secrets
+env:
+  - name: ELASTICSEARCH_PASSWORD
+    valueFrom:
+      secretKeyRef:
+        name: elasticsearch-secret
+        key: elasticsearch-password
+
+config:
+  logLevel: trace
+  service: |
+    [SERVICE]
+        Daemon Off
+        Flush 5
+        Log_Level debug
+        Parsers_File parsers.conf
+        HTTP_Server On
+        HTTP_Listen 0.0.0.0
+        HTTP_Port 2020
+        Health_Check On
+  
+  inputs: |
+    [INPUT]
+        Name tail
+        
+        Path /var/log/containers/*email*.log
+        Tag kube.*
+        Parser docker
+        Mem_Buf_Limit 50MB
+        Skip_Long_Lines On
+        Read_from_Head true
+        Refresh_Interval 10
+  
+  outputs: |
+    [OUTPUT]
+        Name es
+        Match kube.*
+        Index fluent-bit
+        Type _doc
+        Host elasticsearch.logging.svc.cluster.local
+        Port 9200
+        HTTP_User elastic
+        HTTP_Passwd ${ELASTICSEARCH_PASSWORD}
+        tls Off
+        tls.verify Off
+        Logstash_Format On
+        Logstash_Prefix email-service
+        Retry_Limit False
+        Suppress_Type_Name On
+  
+  parsers: |
+    [PARSER]
+        Name docker
+        Format json
+        Time_Key time
+        Time_Format %Y-%m-%dT%H:%M:%S.%L
+        Time_Keep On
+
+resources:
+  requests:
+    cpu: "25m"
+    memory: "32Mi"
+  limits:
+    cpu: "50m"
+    memory: "64Mi"

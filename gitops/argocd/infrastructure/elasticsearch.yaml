@@ -1,0 +1,39 @@
+apiVersion: argoproj.io/v1alpha1
+kind: Application
+metadata:
+  name: elasticsearch
+  namespace: argocd
+  labels:
+    app.kubernetes.io/name: elasticsearch
+    app.kubernetes.io/managed-by: argocd
+  annotations:
+    argocd.argoproj.io/sync-wave: "2"
+  finalizers:
+    - resources-finalizer.argocd.argoproj.io
+spec:
+  project: default
+  sources:
+  - repoURL: "https://charts.bitnami.com/bitnami"
+    chart: elasticsearch
+    targetRevision: 21.1.0
+    helm:
+      valueFiles:
+      - $values/values/infrastructure/elasticsearch-values.yaml
+  - repoURL: https://github.com/sara-golombeck/gitops-email-service.git
+    targetRevision: main
+    ref: values
+  destination:
+    server: "https://kubernetes.default.svc"
+    namespace: logging
+  syncPolicy:
+    automated:
+      prune: true
+      selfHeal: true
+    syncOptions:
+      - ServerSideApply=true
+      - CreateNamespace=true 
+    retry:
+      limit: 3
+      backoff:
+        duration: 10s
+        factor: 2

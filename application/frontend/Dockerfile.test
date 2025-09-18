@@ -1,0 +1,18 @@
+# Test stage
+FROM node:18-alpine AS test
+
+WORKDIR /app
+
+# Install dependencies
+COPY package*.json ./
+RUN npm ci
+
+# Copy source code
+COPY . .
+
+# Set environment for testing
+ENV NODE_ENV=test
+ENV CI=true
+
+# Default command runs all tests
+CMD ["npm", "test", "--", "--coverage", "--watchAll=false"]

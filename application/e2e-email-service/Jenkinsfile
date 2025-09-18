@@ -1,0 +1,329 @@
+// // pipeline {
+// //     agent any
+    
+// //     parameters {
+// //         string(name: 'BACKEND_IMAGE', defaultValue: '', description: 'Backend image to test')
+// //         string(name: 'FRONTEND_IMAGE', defaultValue: '', description: 'Frontend image to test')
+// //         string(name: 'WORKER_IMAGE', defaultValue: '', description: 'Worker image to test')
+// //         string(name: 'STATIC_FILES_URL', defaultValue: '', description: 'CloudFront URL for static files')
+// //         string(name: 'TEST_EMAIL', defaultValue: 'test@example.com', description: 'Email for testing')
+// //     }
+    
+// //     environment {
+// //         JENKINS_BASE_URL = credentials('jenkins-base-url')
+// //         POSTGRES_PASSWORD = credentials('postgres-test-password')
+// //         BASE_URL = "${JENKINS_BASE_URL}:80"
+// //     }
+    
+// //     stages {
+// //         stage('Deploy Test Environment') {
+// //             steps {
+// //                 withCredentials([
+// //                     string(credentialsId: 'aws-account-id', variable: 'AWS_ID'),
+// //                     string(credentialsId: 'aws_region', variable: 'REGION')
+// //                 ]) {
+// //                     script {
+// //                         env.BACKEND_IMG = params.BACKEND_IMAGE ?: "${AWS_ID}.dkr.ecr.${REGION}.amazonaws.com/automarkly/emailservice-backend:latest"
+// //                         env.WORKER_IMG = params.WORKER_IMAGE ?: "${AWS_ID}.dkr.ecr.${REGION}.amazonaws.com/automarkly/emailservice-worker:latest"
+                        
+// //                         // Best Practice: Build nginx container for E2E when frontend is static files
+// //                         if (params.FRONTEND_IMAGE == 'STATIC_FILES') {
+// //                             sh '''
+// //                                 # Build nginx container from current frontend code
+// //                                 cd ../frontend
+// //                                 docker build --target nginx -t "temp-frontend-e2e:${BUILD_NUMBER}" .
+// //                                 cd ../e2e-email-service
+// //                             '''
+// //                             env.FRONTEND_IMG = "temp-frontend-e2e:${BUILD_NUMBER}"
+// //                         } else {
+// //                             env.FRONTEND_IMG = params.FRONTEND_IMAGE ?: "${AWS_ID}.dkr.ecr.${REGION}.amazonaws.com/automarkly/emailservice-frontend:latest"
+// //                         }
+// //                     }
+                    
+// //                     sh '''
+                        
+// //                         cat > .env <<EOF
+// // BACKEND_IMAGE=${BACKEND_IMG}
+// // FRONTEND_IMAGE=${FRONTEND_IMG}
+// // WORKER_IMAGE=${WORKER_IMG}
+// // POSTGRES_DB=automarkly_test
+// // POSTGRES_USER=postgres
+// // POSTGRES_PASSWORD=${POSTGRES_PASSWORD}
+// // COMPOSE_PROJECT_NAME=automarkly_e2e
+// // EOF
+// //                         # Start all services
+// //                         docker compose up -d 
+// //                     '''
+// //                 }
+// //             }
+// //         }
+        
+// //         stage('Run API E2E Tests') {
+// //             steps {
+// //                 sh '''
+// //                     docker build -t "e2e-tests:${BUILD_NUMBER}" .
+// //                     docker run --rm \
+// //                         --network automarkly_e2e_app-network \
+// //                         -e BASE_URL=${BASE_URL} \
+// //                         "e2e-tests:${BUILD_NUMBER}" \
+// //                         python -m pytest test_integration.py -v
+// //                 '''
+// //             }
+// //         }
+        
+// //         stage('Run Frontend E2E Tests') {
+// //             steps {
+// //                 sh '''
+// //                     # Test frontend container (Best Practice)
+// //                     docker run --rm \
+// //                         --network automarkly_e2e_app-network \
+// //                         -e FRONTEND_URL="http://frontend:8080" \
+// //                         "e2e-tests:${BUILD_NUMBER}" \
+// //                         python -m pytest test_frontend.py -v
+// //                 '''
+// //             }
+// //         }
+// //     }
+    
+// //     post {
+// //         always {
+// //             sh '''
+// //                 docker compose logs > e2e-logs.txt || true
+// //                 docker compose down -v || true
+// //                 # Cleanup temp frontend image
+// //                 docker rmi "temp-frontend-e2e:${BUILD_NUMBER}" || true
+// //             '''
+// //             archiveArtifacts artifacts: 'e2e-logs.txt', allowEmptyArchive: true
+// //         }
+// //         success {
+// //             echo 'E2E Tests PASSED'
+// //         }
+// //         failure {
+// //             echo 'E2E Tests FAILED'
+// //         }
+// //     }
+// // }
+
+
+// pipeline {
+//     agent any
+    
+//     parameters {
+//         string(name: 'BACKEND_IMAGE', defaultValue: '', description: 'Backend image to test')
+//         string(name: 'FRONTEND_IMAGE', defaultValue: '', description: 'Frontend E2E image to test (local)')
+//         string(name: 'WORKER_IMAGE', defaultValue: '', description: 'Worker image to test')
+//         string(name: 'TEST_EMAIL', defaultValue: 'test@example.com', description: 'Email for testing')
+//     }
+    
+//     environment {
+//         POSTGRES_PASSWORD = credentials('postgres-test-password')
+//     }
+    
+//     stages {
+//         stage('Validate Parameters') {
+//             steps {
+//                 script {
+//                     if (!params.FRONTEND_IMAGE) {
+//                         error("FRONTEND_IMAGE parameter is required")
+//                     }
+//                     if (!params.BACKEND_IMAGE) {
+//                         error("BACKEND_IMAGE parameter is required")
+//                     }
+                    
+//                     // Check if E2E image exists locally
+//                     def imageExists = sh(
+//                         script: "docker inspect ${params.FRONTEND_IMAGE} >/dev/null 2>&1",
+//                         returnStatus: true
+//                     ) == 0
+                    
+//                     if (!imageExists) {
+//                         error("Frontend E2E image ${params.FRONTEND_IMAGE} not found locally")
+//                     }
+//                 }
+//             }
+//         }
+        
+//         stage('Deploy Test Environment') {
+//             steps {
+//                 script {
+//                     env.BACKEND_IMG = params.BACKEND_IMAGE
+//                     env.FRONTEND_IMG = params.FRONTEND_IMAGE
+//                     env.WORKER_IMG = params.WORKER_IMAGE
+//                 }
+                
+//                 sh '''
+//                     cat > .env <<EOF
+// BACKEND_IMAGE=${BACKEND_IMG}
+// FRONTEND_IMAGE=${FRONTEND_IMG}
+// WORKER_IMAGE=${WORKER_IMG}
+// POSTGRES_DB=automarkly_test
+// POSTGRES_USER=postgres
+// POSTGRES_PASSWORD=${POSTGRES_PASSWORD}
+// COMPOSE_PROJECT_NAME=automarkly_e2e
+// EOF
+//                     docker compose up -d 
+                    
+//                     # Wait for services to be ready
+//                     echo "Waiting for services to start..."
+//                     sleep 30
+//                 '''
+//             }
+//         }
+        
+//         stage('Run E2E Tests') {
+//             parallel {
+//                 stage('API Tests') {
+//                     steps {
+//                         sh '''
+//                             docker build -t "e2e-tests:${BUILD_NUMBER}" .
+//                             docker run --rm \
+//                                 --network automarkly_e2e_app-network \
+//                                 -e API_URL="http://backend:8080" \
+//                                 "e2e-tests:${BUILD_NUMBER}" \
+//                                 python -m pytest test_integration.py -v
+//                         '''
+//                     }
+//                 }
+                
+//                 stage('Frontend Tests') {
+//                     steps {
+//                         sh '''
+//                             docker run --rm \
+//                                 --network automarkly_e2e_app-network \
+//                                 -e FRONTEND_URL="http://frontend:8080" \
+//                                 "e2e-tests:${BUILD_NUMBER}" \
+//                                 python -m pytest test_frontend.py -v
+//                         '''
+//                     }
+//                 }
+//             }
+//         }
+//     }
+    
+//     post {
+//         always {
+//             sh '''
+//                 docker compose logs > e2e-logs.txt || true
+//                 docker compose down -v || true
+//                 # Clean up test runner image
+//                 docker rmi "e2e-tests:${BUILD_NUMBER}" || true
+//             '''
+//             archiveArtifacts artifacts: 'e2e-logs.txt', allowEmptyArchive: true
+//         }
+//         success {
+//             echo 'E2E Tests PASSED'
+//         }
+//         failure {
+//             echo 'E2E Tests FAILED'
+//         }
+//     }
+// }
+
+
+
+pipeline {
+    agent any
+    
+    parameters {
+        string(name: 'BACKEND_IMAGE', defaultValue: '', description: 'Backend image to test')
+        string(name: 'FRONTEND_IMAGE', defaultValue: '', description: 'Frontend image to test')
+        string(name: 'WORKER_IMAGE', defaultValue: '', description: 'Worker image to test')
+    }
+    
+    environment {
+        POSTGRES_PASSWORD = credentials('postgres-test-password')
+    }
+    
+    stages {
+        stage('Validate Parameters') {
+            steps {
+                script {
+                    if (!params.FRONTEND_IMAGE) {
+                        error("FRONTEND_IMAGE parameter is required")
+                    }
+                    if (!params.BACKEND_IMAGE) {
+                        error("BACKEND_IMAGE parameter is required")
+                    }
+                }
+            }
+        }
+        
+        stage('Deploy Test Environment') {
+            steps {
+                withCredentials([
+                    string(credentialsId: 'aws-account-id', variable: 'AWS_ID'),
+                    string(credentialsId: 'aws_region', variable: 'REGION')
+                ]) {
+                    script {
+                        env.BACKEND_IMG = params.BACKEND_IMAGE
+                        env.FRONTEND_IMG = params.FRONTEND_IMAGE
+                        env.WORKER_IMG = params.WORKER_IMAGE ?: "${AWS_ID}.dkr.ecr.${REGION}.amazonaws.com/automarkly/emailservice-worker:latest"
+                    }
+                    
+                    sh '''
+                        cat > .env <<EOF
+BACKEND_IMAGE=${BACKEND_IMG}
+FRONTEND_IMAGE=${FRONTEND_IMG}
+WORKER_IMAGE=${WORKER_IMG}
+POSTGRES_DB=automarkly_test
+POSTGRES_USER=postgres
+POSTGRES_PASSWORD=${POSTGRES_PASSWORD}
+COMPOSE_PROJECT_NAME=automarkly_e2e
+EOF
+                        
+                        echo "Starting E2E test environment..."
+                        echo "Backend: ${BACKEND_IMG}"
+                        echo "Frontend: ${FRONTEND_IMG}"
+                        echo "Worker: ${WORKER_IMG}"
+                        
+                        # Start all services
+                        docker compose up -d 
+                        
+                        # Wait for services to be ready
+                        echo "Waiting for services to initialize..."                        
+                        # Verify services are running
+                        echo "Service status:"
+                        docker compose ps
+                    '''
+                }
+            }
+        }
+        
+        stage('Run E2E Tests') {
+            steps {
+                sh '''
+                    echo "Building E2E test runner..."
+                    docker build -t "e2e-tests:${BUILD_NUMBER}" .
+                    
+                    echo "Running E2E tests through frontend nginx proxy..."
+                    docker run --rm \
+                        --network automarkly_e2e_app-network \
+                        -e BASE_URL="http://frontend:8080" \
+                        "e2e-tests:${BUILD_NUMBER}"
+                '''
+            }
+        }
+    }
+    
+    post {
+        always {
+            sh '''
+                echo "Collecting service logs..."
+                docker compose logs > e2e-logs.txt 2>&1 || true
+                
+                echo "Shutting down test environment..."
+                docker compose down -v --remove-orphans || true
+                
+                # Cleanup test runner image
+                docker rmi "e2e-tests:${BUILD_NUMBER}" || true
+            '''
+            archiveArtifacts artifacts: 'e2e-logs.txt', allowEmptyArchive: true
+        }
+        success {
+            echo 'E2E Tests PASSED - Full system integration verified!'
+        }
+        failure {
+            echo 'E2E Tests FAILED - Check logs and service status'
+        }
+    }
+}

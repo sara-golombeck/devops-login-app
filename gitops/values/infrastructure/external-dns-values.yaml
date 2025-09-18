@@ -1,0 +1,39 @@
+provider:
+  name: aws
+
+env:
+  - name: AWS_REGION
+    value: ap-south-1
+
+extraArgs:
+  - --aws-zone-type=public
+
+domainFilters:
+  - myname.click
+
+policy: sync
+txtOwnerId: email-service-cluster
+
+serviceAccount:
+  create: true
+  name: external-dns
+  annotations:
+    eks.amazonaws.com/role-arn: "arn:aws:iam::980921758549:role/email-service-cluster-external-dns-role"
+
+securityContext:
+  runAsNonRoot: true
+  runAsUser: 65534
+
+resources:
+  limits:
+    cpu: 50m
+    memory: 50Mi
+  requests:
+    cpu: 10m
+    memory: 20Mi
+
+logLevel: info
+
+sources:
+  - ingress
+  - service

@@ -1,0 +1,12 @@
+apiVersion: v2
+name: worker
+description:  EmailService Worker
+type: application
+version: 1.0.0
+appVersion: "1.0.4"
+
+keywords:
+  - email
+  - worker
+  - dotnet
+  - background

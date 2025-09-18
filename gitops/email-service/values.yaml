@@ -1,0 +1,64 @@
+global:
+  domain: "myname.click"
+  namespace: "email-service"
+  environment: "production"
+  email: "sara.beck.dev@gmail.com"
+
+backend:
+  service:
+    port: 8080
+
+serviceAccount:
+  backend:
+    name: "auth-service"
+    roleArn: "arn:aws:iam::980921758549:role/email-service-auth-service-role"
+  worker:
+    name: "email-service"
+    roleArn: "arn:aws:iam::980921758549:role/email-service-email-service-role"
+
+certManager:
+  enabled: true
+  email: "sara.beck.dev@gmail.com"
+
+
+postgresql:
+  enabled: true
+  namespaceOverride: "email-service"
+  auth:
+    enabled: true
+    existingSecret: postgresql-secret
+    secretKeys:
+      adminPasswordKey: postgres-password
+      userPasswordKey: password
+    username: email_service_user
+    database: "email_service_db"
+
+ingress:
+  enabled: true
+  className: "nginx"
+  annotations:
+    cert-manager.io/cluster-issuer: "letsencrypt-prod"
+    nginx.ingress.kubernetes.io/ssl-redirect: "true"
+    nginx.ingress.kubernetes.io/force-ssl-redirect: "true"
+    nginx.ingress.kubernetes.io/backend-protocol: "HTTP"
+    external-dns.alpha.kubernetes.io/hostname: "api.myname.click"
+  hosts:
+    - host: api.myname.click
+      paths:
+        - path: /
+          pathType: Prefix
+          service: backend
+  tls:
+    - secretName: email-service-tls
+      hosts:
+        - api.myname.click
+
+elasticsearch:
+  secretsEnabled: true
+
+clusterIssuer:
+  name: letsencrypt-prod
+  secretName: letsencrypt-prod
+  server: https://acme-v02.api.letsencrypt.org/directory
+  email: "sara.beck.dev@gmail.com"
+  ingressClassName: nginx

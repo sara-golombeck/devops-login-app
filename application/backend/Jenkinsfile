@@ -1,0 +1,279 @@
+pipeline {
+   agent any
+   
+   environment {
+       APP_NAME = 'automarkly-backend'
+       BUILD_NUMBER = "${env.BUILD_NUMBER}"
+       AWS_ACCOUNT_ID = credentials('aws-account-id')
+       AWS_REGION = credentials('aws_region')
+       REPORT_EMAIL = 'sara.beck.dev@gmail.com'
+       
+       // Staging ECR
+       ECR_STAGING_BACKEND = "${AWS_ACCOUNT_ID}.dkr.ecr.${AWS_REGION}.amazonaws.com/automarkly/staging/emailservice-backend"
+       ECR_STAGING_FRONTEND = "${AWS_ACCOUNT_ID}.dkr.ecr.${AWS_REGION}.amazonaws.com/automarkly/staging/emailservice-frontend"
+
+       // Production ECR
+       ECR_PROD_BACKEND = "${AWS_ACCOUNT_ID}.dkr.ecr.${AWS_REGION}.amazonaws.com/automarkly/emailservice-backend"
+       ECR_PROD_WORKER = "${AWS_ACCOUNT_ID}.dkr.ecr.${AWS_REGION}.amazonaws.com/automarkly/emailservice-worker"       
+       GITOPS_REPO = credentials('gitops-repo-url')
+       HELM_VALUES_PATH = 'email-service/charts/backend/values.yaml'
+       PRODUCTION_URL = credentials('production-url')
+   }
+   
+   triggers {
+       githubPush()
+   }
+   
+   stages {
+       stage('Checkout') {
+           when {
+               anyOf {
+                   branch 'main'
+                   branch 'feature/*'
+                   branch 'release/*'
+               }
+           }
+           steps {
+               checkout scm
+               sshagent(['github']) {
+                   sh "git fetch --tags --unshallow || git fetch --tags"
+               }
+           }
+       }
+       
+       stage('Unit Tests') {
+           when {
+               anyOf {
+                   branch 'main'
+                   branch 'feature/*'
+                   branch 'release/*'
+               }
+           }
+           steps {
+               sh '''
+                   docker build -f Dockerfile.test -t "${APP_NAME}:test-${BUILD_NUMBER}" .
+                   mkdir -p test-results
+                   docker run --rm \
+                       -v "${PWD}/test-results:/src/test-results" \
+                       "${APP_NAME}:test-${BUILD_NUMBER}"
+               '''
+           }
+           post {
+               always {
+                   archiveArtifacts artifacts: 'test-results/**/*', allowEmptyArchive: true
+               }
+           }
+       }
+       
+       stage('Package') {
+           when {
+               anyOf {
+                   branch 'main'
+                   branch 'feature/*'
+                   branch 'release/*'
+               }
+           }
+           steps {
+               timeout(time: 10, unit: 'MINUTES') {
+                   sh '''
+                       docker build -t "${APP_NAME}:${BUILD_NUMBER}" .
+                       docker tag "${APP_NAME}:${BUILD_NUMBER}" "${ECR_STAGING_BACKEND}:${BUILD_NUMBER}"
+                   '''
+               }
+           }
+       }
+       
+       stage('Push to Staging') {
+           when {
+               anyOf {
+                   branch 'main'
+                   branch 'feature/*'
+                   branch 'release/*'
+               }
+           }
+           steps {
+               retry(3) {
+                   sh '''
+                       aws ecr get-login-password --region "${AWS_REGION}" | \
+                           docker login --username AWS --password-stdin "${AWS_ACCOUNT_ID}.dkr.ecr.${AWS_REGION}.amazonaws.com"
+                   '''
+               }
+               
+               timeout(time: 5, unit: 'MINUTES') {
+                   sh '''
+                       docker push "${ECR_STAGING_BACKEND}:${BUILD_NUMBER}"
+                   '''
+               }
+           }
+       }
+       
+       stage('Run E2E Tests') {
+           when {
+               anyOf {
+                   branch 'main'
+                   branch 'feature/*'
+                   branch 'release/*'
+               }
+           }
+           steps {
+               build job: 'e2e-email-service',
+                     parameters: [
+                         string(name: 'BACKEND_IMAGE', value: "${ECR_STAGING_BACKEND}:${BUILD_NUMBER}"),
+                         string(name: 'FRONTEND_IMAGE', value: "${ECR_STAGING_FRONTEND}:latest"),
+                         string(name: 'WORKER_IMAGE', value: "${ECR_PROD_WORKER}:latest")
+                     ],
+                     wait: true
+           }
+       }
+       
+       stage('Create Version Tag') {
+           when { 
+               anyOf {
+                   branch 'main'
+                   branch 'release/*'
+               }
+           }
+           steps {
+               script {
+                   env.MAIN_TAG = sh(script: 'gitversion -showvariable SemVer', returnStdout: true).trim()
+               }
+           }
+       }
+       
+       stage('Push Git Tag') {
+           when { 
+               anyOf {
+                   branch 'main'
+                   branch 'release/*'
+               }
+           }
+           steps {
+               sshagent(['github']) {
+                   withCredentials([
+                       string(credentialsId: 'git-username', variable: 'GIT_USERNAME'),
+                       string(credentialsId: 'git-email', variable: 'GIT_EMAIL')
+                   ]) {
+                       sh '''
+                           git config user.email "${GIT_EMAIL}"
+                           git config user.name "${GIT_USERNAME}"
+                           
+                           git tag -a "v${MAIN_TAG}" -m "Release v${MAIN_TAG} - Build ${BUILD_NUMBER}"
+                           git push origin "v${MAIN_TAG}"
+                       '''
+                   }
+               }
+           }
+       }
+       
+       stage('Publish') {
+           when { 
+               anyOf {
+                   branch 'main'
+                   branch 'release/*'
+               }
+           }
+           steps {
+               retry(3) {
+                   sh '''
+                       docker tag "${APP_NAME}:${BUILD_NUMBER}" "${ECR_PROD_BACKEND}:${MAIN_TAG}"
+                       docker tag "${APP_NAME}:${BUILD_NUMBER}" "${ECR_PROD_BACKEND}:latest"
+                       docker push "${ECR_PROD_BACKEND}:${MAIN_TAG}"
+                       docker push "${ECR_PROD_BACKEND}:latest"
+                   '''
+               }
+           }
+       }
+       
+       stage('Deploy') {
+           when { 
+               anyOf {
+                   branch 'main'
+                   branch 'release/*'
+               }
+           }
+           steps {
+               sshagent(['github']) {
+                   sh '''
+                       rm -rf gitops-config
+                       git clone "${GITOPS_REPO}" gitops-config
+                   '''
+                   
+                   withCredentials([
+                       string(credentialsId: 'git-username', variable: 'GIT_USERNAME'),
+                       string(credentialsId: 'git-email', variable: 'GIT_EMAIL')
+                   ]) {
+                       dir('gitops-config') {
+                           sh '''
+                               git config user.email "${GIT_EMAIL}"
+                               git config user.name "${GIT_USERNAME}"
+
+                               # Update backend sub-chart appVersion and image tag
+                               sed -i 's/appVersion: ".*"/appVersion: "'${MAIN_TAG}'"/' email-service/charts/backend/Chart.yaml
+                               sed -i 's/tag: ".*"/tag: "'${MAIN_TAG}'"/' "${HELM_VALUES_PATH}"
+                               
+                               if git diff --quiet "${HELM_VALUES_PATH}"; then
+                                   echo "No changes to deploy"
+                               else
+                                   git add "${HELM_VALUES_PATH}"
+                                   git commit -m "Deploy backend v${MAIN_TAG} - Build ${BUILD_NUMBER}"
+                                   git push origin main
+                               fi
+                           '''
+                       }
+                   }
+               }
+           }
+       }
+       
+       stage('Smoke Tests') {
+           when { 
+               anyOf {
+                   branch 'main'
+                   branch 'release/*'
+               }
+           }
+           steps {
+               timeout(time: 2, unit: 'MINUTES') {
+                   sh '''
+                       curl -f "http://api.myname.click/health"
+                   '''
+               }
+           }
+       }
+   }
+   
+   post {
+       always {
+           script {
+               def status = currentBuild.result ?: 'SUCCESS'
+               
+               emailext(
+                   to: "${REPORT_EMAIL}",
+                   subject: "Backend Build #${BUILD_NUMBER} - ${status}",
+                   body: """
+                       Pipeline: ${status}
+                       Build: #${BUILD_NUMBER}
+                       Version: ${env.MAIN_TAG ?: 'N/A'}
+                       Duration: ${currentBuild.durationString}
+                       
+                       Details: ${BUILD_URL}
+                   """
+               )
+           }
+           
+           sh '''
+               docker rmi "${APP_NAME}:test-${BUILD_NUMBER}" || true
+               docker rmi "${APP_NAME}:${BUILD_NUMBER}" || true
+               docker image prune -f || true
+               rm -rf gitops-config || true
+           '''
+           cleanWs()
+       }
+       success {
+           echo 'Backend pipeline completed successfully!'
+       }
+       failure {
+           echo 'Backend pipeline failed!'
+       }
+   }
+}
