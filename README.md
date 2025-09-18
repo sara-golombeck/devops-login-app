@@ -136,6 +136,8 @@ email-service/
 
 ## 📊 Monitoring & Observability
 
+![Logging Architecture](diagrams/logging.png)
+
 - **Metrics**: Prometheus for metrics collection
 - **Visualization**: Grafana dashboards
 - **Logging**: Centralized logging with Fluent Bit and Elasticsearch
