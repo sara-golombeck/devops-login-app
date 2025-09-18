@@ -13,6 +13,8 @@ React application for email authentication interface.
 - Responsive design with mobile support
 - Real-time error handling and feedback
 - Loading states and user experience optimization
+- Jenkins CI/CD pipeline with S3 deployment
+- Docker containerization for consistent deployment
 
 ## Quick Start
 

@@ -9,6 +9,8 @@ Python-based end-to-end testing framework for comprehensive email service valida
 - **Frontend Testing**: UI interaction and response validation
 - **Email Delivery Testing**: SES integration verification
 - **Cross-Service Testing**: Multi-component workflow validation
+- **Jenkins CI/CD Integration**: Automated testing pipeline
+- **Docker Containerization**: Consistent test environment
 
 ## Quick Start
 

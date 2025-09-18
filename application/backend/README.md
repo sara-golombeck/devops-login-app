@@ -11,6 +11,8 @@
 - Prometheus metrics integration
 - FluentValidation request validation
 - Health checks and monitoring
+- Jenkins CI/CD pipeline integration
+- Docker containerization with multi-stage builds
 
 ## Quick Start
 

@@ -13,6 +13,8 @@
 - Prometheus metrics and health monitoring
 - Retry logic for failed deliveries
 - Graceful shutdown and error handling
+- Jenkins CI/CD pipeline integration
+- Docker containerization with multi-stage builds
 
 ## Quick Start
 
